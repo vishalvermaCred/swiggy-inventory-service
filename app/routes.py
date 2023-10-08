@@ -44,11 +44,11 @@ async def get_item(request: Request):
     logger.info(f"{LOGGER_KEY}.get_item")
     params = dict(request.query_params)
     response = await get_item_from_all_restaurants(params)
-    return await generate_response(response)
+    return await generate_response(**response)
 
 
 @router.patch("/")
 async def update_menu(body: UpdateMenu = Body(...)):
     logger.info(f"{LOGGER_KEY}.update_menu")
     response = await update_menu_items(body.dict())
-    return await generate_response(response)
+    return await generate_response(**response)
