@@ -2,6 +2,10 @@ from typing import Optional
 from pydantic import BaseModel, Extra
 from pydantic.fields import Field
 
+"""
+    creating models to validate the payload of APIs using pydantic
+"""
+
 
 class MenuBaseModel(BaseModel):
     class Config:
@@ -17,6 +21,7 @@ class CreateMenu(MenuBaseModel):
     price: float = Field(None)
     stock_quantity: int = 0
     is_available: bool = False
+
 
 class UpdateMenu(MenuBaseModel):
     item_id: str = Field(...)

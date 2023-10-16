@@ -1,5 +1,9 @@
 from http.client import HTTPException
 
+"""
+    functions declared here will be executed before the API runs
+"""
+
 
 class MissingEnvConfigsException(Exception):
     def __init__(self, parameters):
