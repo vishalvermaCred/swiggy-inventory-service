@@ -3,12 +3,15 @@ from http import HTTPStatus
 from fastapi.logger import logger
 
 from app.context import app_context
-from app.constants import Tables, Roles
+from app.constants import Tables
 
 LOGGER_KEY = "app.service"
 
 
 async def item_exists(item_name, restaurant_id):
+    """
+    checks if an item exists in a restaurant
+    """
     logger.info(f"{LOGGER_KEY}.item_exists")
     select_query = f"select item_id from {Tables.MENU.value['name']} where name = '{item_name}' and restaurant_id = '{restaurant_id}';"
     item_data = await app_context.db.execute_raw_select_query(select_query)
@@ -18,6 +21,9 @@ async def item_exists(item_name, restaurant_id):
 
 
 async def add_item(kwargs):
+    """
+    adds items to the restaurant menu
+    """
     logger.info(f"{LOGGER_KEY}.add_item")
     try:
         item_id = uuid4().hex
@@ -33,6 +39,9 @@ async def add_item(kwargs):
 
 
 async def get_menu_items(kwargs):
+    """
+    get all the items listed in a menu
+    """
     logger.info(f"{LOGGER_KEY}.get_menu_items")
     try:
         restaurant_id = kwargs.get("restaurant_id")
@@ -42,21 +51,24 @@ async def get_menu_items(kwargs):
             return {
                 "success": False,
                 "message": "Menu for given restaurant is not available",
-                "code": HTTPStatus.BAD_REQUEST.value
+                "code": HTTPStatus.BAD_REQUEST.value,
             }
         return {
             "success": True,
             "message": "Menu fetched successfully",
             "code": HTTPStatus.OK.value,
-            "data": menu_items
+            "data": menu_items,
         }
     except Exception as e:
-        logger.error(f"{LOGGER_KEY}.get_menu_items.exceptiopn: {str(e)}")
+        logger.error(f"{LOGGER_KEY}.get_menu_items.exception: {str(e)}")
         return {"success": False, "message": str(e), "code": HTTPStatus.INTERNAL_SERVER_ERROR.value}
 
 
 async def get_item_from_all_restaurants(kwargs):
-    logger.info(f'{LOGGER_KEY}.get_item_from_all_restaurants')
+    """
+    list all restuarants that serve a specific item
+    """
+    logger.info(f"{LOGGER_KEY}.get_item_from_all_restaurants")
     try:
         name = kwargs.get("name")
         select_query = f"SELECT item_id, restaurant_id, name, description, price::VARCHAR, stock_quantity, is_available FROM {Tables.MENU.value['name']} WHERE name like '%{name}%' and is_available = true;"
@@ -65,36 +77,34 @@ async def get_item_from_all_restaurants(kwargs):
             return {
                 "success": False,
                 "message": "This item is not present right now",
-                "code": HTTPStatus.BAD_REQUEST.value
+                "code": HTTPStatus.BAD_REQUEST.value,
             }
-        return {
-            "success": True,
-            "message": "Menu fetched successfully",
-            "code": HTTPStatus.OK.value,
-            "data": item_data
-        }
+        return {"success": True, "message": "Menu fetched successfully", "code": HTTPStatus.OK.value, "data": item_data}
     except Exception as e:
         logger.error(f"{LOGGER_KEY}.get_item_from_all_restaurants.exceptiopn: {str(e)}")
         return {"success": False, "message": str(e), "code": HTTPStatus.INTERNAL_SERVER_ERROR.value}
 
 
 async def update_menu_items(kwargs):
+    """
+    updates an item in a menu
+    """
     logger.info(f"{LOGGER_KEY}.update_menu_items")
     try:
         item_id = kwargs.get("item_id")
         update_query = f"UPDATE {Tables.MENU.value['name']} SET "
         update_clause = ""
-        if kwargs.get('name'):
+        if kwargs.get("name"):
             update_clause += f"name = '{kwargs.get('name')}', "
-        if kwargs.get('description'):
+        if kwargs.get("description"):
             update_clause += f"description = '{kwargs.get('description')}', "
-        if kwargs.get('price'):
+        if kwargs.get("price"):
             update_clause += f"price = '{kwargs.get('price')}', "
-        if kwargs.get('ordered_quantity'):
+        if kwargs.get("ordered_quantity"):
             update_clause += f"stock_quantity = stock_quantity-{kwargs.get('ordered_quantity')}, is_available = (stock_quantity-{kwargs.get('ordered_quantity')})>0, "
-        if kwargs.get('restock_quantity'):
+        if kwargs.get("restock_quantity"):
             update_clause += f"stock_quantity = stock_quantity+{kwargs.get('restock_quantity')}, is_available = (stock_quantity+{kwargs.get('restock_quantity')})>0, "
-        
+
         update_clause = update_clause.strip(", ")
         update_query += update_clause + f" WHERE item_id = '{item_id}';"
         if not update_clause:
